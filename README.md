@@ -2,7 +2,7 @@
 
 This is a project to control a hoverboard using two inverted pendulum to keep the hoverboard in a stable position.
 
-The pendulums are controlled using a Raspberri pi and a L293D motor driver.
+The pendulums are controlled using a Raspberry Pi (ideally) and two linear actuators that move two masses, changing the center of mass and making the hoverboard balance.
 
 ## Hardware
 
