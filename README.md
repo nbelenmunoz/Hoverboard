@@ -30,3 +30,5 @@ The pendulums are controlled using a Raspberry Pi (ideally) and two linear actua
 * [Inverse Pendulum — Deep Reinforcement Learning](https://medium.com/mlearning-ai/inverse-pendulum-deep-reinforcement-learning-a22689e14e34)
 
 * [MODELADO, SIMULACIÓN Y CONTROL DE UN PÉNDULOINVERTIDO USANDO COMPONENTES ANÁLOGOS SIMPLES](https://www.studocu.com/latam/document/universidad-autonoma-de-occidente/control-1/pendulo-invertido/10076977)
+
+*[Drive Folder](https://drive.google.com/drive/u/1/folders/0ACoW_Sr1GQcIUk9PVA)
