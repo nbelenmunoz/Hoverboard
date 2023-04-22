@@ -1,0 +1,4 @@
+gpiozero
+matplotlib
+mpu9250-jmdev
+ffmpeg-python
