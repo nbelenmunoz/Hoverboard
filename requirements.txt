@@ -1,4 +1,4 @@
-tensorflow
-numpy
-random
+gpiozero
 matplotlib
+mpu9250-jmdev
+ffmpeg-python
