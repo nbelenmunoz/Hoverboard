@@ -5,7 +5,7 @@
 #include <PID_v1.h>
   
 // Conexión del sensor IMU BNO055
-Adafruit_BNO055 bno = Adafruit_BNO055(55);
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
 // Parámetros del controlador PID
 double Kp = 60.0;
@@ -47,10 +47,14 @@ void loop() {
   // Leer el ángulo del sensor IMU
   sensors_event_t event;
   bno.getEvent(&event);
-  input = event.orientation.x;
+  input = event.orientation.z;
+  Serial.print("Input: ");
+  Serial.println(input);
 
   // Ejecutar el controlador PID
   pid.Compute();
+  Serial.print("Output: ");
+  Serial.println(output);
   controlMotor(output);
 }
 
@@ -69,6 +73,7 @@ void controlMotor(double speed) {
   if (speed > maxSpeed) {
     speed = maxSpeed;
   }
-
+  Serial.print("Speed: ");
+  Serial.println(speed);
   analogWrite(enA, speed);
 }
