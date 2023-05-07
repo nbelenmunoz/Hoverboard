@@ -1,11 +1,19 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
-#include <Adafruit_MotorShield.h>
+#include <L298N.h> // L298N es para un motor
 #include <PID_v1.h>
   
 // Conexión del sensor IMU BNO055
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
+
+// Configuración del controlador de motor L298N
+const int in1 = 5;
+const int in2 = 6;
+const int enA = 9;
+
+//Conexión al L298N
+L298N myMotor(enA, in1, in2);
 
 // Parámetros del controlador PID
 double Kp = 60.0;
@@ -15,11 +23,6 @@ double Kd = 10.0;
 // Variables del controlador PID
 double input, output, setpoint;
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
-
-// Configuración del controlador de motor L298N
-const int in1 = 5;
-const int in2 = 6;
-const int enA = 9;
 
 void setup() {
   Serial.begin(9600);
@@ -59,21 +62,17 @@ void loop() {
 }
 
 void controlMotor(double speed) {
+  double maxSpeed = 255.0 * (40.0 / 60.0); // (40 mm/s) / (60 s/min) = 0.83
+  speed = min(speed, maxSpeed);
+
   if (speed > 0) {
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
+    myMotor.forward();
   } else {
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-    speed = -speed;
+    myMotor.backward();
   }
 
-  // Limitar la velocidad del motor a la velocidad máxima del actuador lineal
-  double maxSpeed = 255.0 * (40.0 / 60.0); // (40 mm/s) / (60 s/min) = 0.83
-  if (speed > maxSpeed) {
-    speed = maxSpeed;
-  }
   Serial.print("Speed: ");
   Serial.println(speed);
-  analogWrite(enA, speed);
+  myMotor.setSpeed(speed);
+  myMotor.run();
 }

@@ -3,6 +3,7 @@
 #include <Adafruit_BNO055.h>
 #include <Adafruit_FXOS8700.h>
 #include <Adafruit_FXAS21002C.h>
+#include <L298N.h> // L298N 
 #include <PID_v1.h>
 
 // Conexión del sensor IMU BNO055
@@ -18,16 +19,24 @@ double Ki = 40.0;
 double Kd = 10.0;
 
 // Variables del controlador PID
-double input, output, setpoint;
-PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
+double inputIzq, outputIzq, setpointIzq;
+PID pidIzq(&inputIzq, &outputIzq, &setpointIzq, Kp, Ki, Kd, DIRECT);
+
+double inputDer, outputDer, setpointDer;
+PID pidDer(&inputDer, &outputDer, &setpointDer, Kp, Ki, Kd, DIRECT);
 
 // Configuración del controlador de motor L298N para ambos motores
 const int in1 = 5;
 const int in2 = 6;
 const int enA = 9;
+
 const int in3 = 7;
 const int in4 = 8;
 const int enB = 10;
+
+//Conexión al L298N
+L298N motorIzq(enA, in1, in2);
+L298N motorDer(enB, in3, in4);
 
 void setup() {
   Serial.begin(9600);
@@ -47,10 +56,15 @@ void setup() {
   }
 
   // Configuración del controlador PID
-  setpoint = 0;
-  pid.SetMode(AUTOMATIC);
-  pid.SetOutputLimits(-255, 255);
-  pid.SetSampleTime(10);
+  setpointIzq = 0;
+  pidIzq.SetMode(AUTOMATIC);
+  pidIzq.SetOutputLimits(-255, 255);
+  pidIzq.SetSampleTime(10);
+
+  setpointDer = 0;
+  pidDer.SetMode(AUTOMATIC);
+  pidDer.SetOutputLimits(-255, 255);
+  pidDer.SetSampleTime(10);
 
   // Configuración del controlador de motor L298N para ambos motores
   pinMode(in1, OUTPUT);
@@ -78,26 +92,37 @@ void loop() {
   // Por ejemplo, puedes calcular una fusión de los datos de ambos sensores IMU y actualizar la variable 'input' con el resultado
 
   // Ejecutar el controlador PID
-  pid.Compute();
-  controlMotor(enA, in1, in2, output); // Motor A
-  controlMotor(enB, in3, in4, output); // Motor B
+  pidIzq.Compute();
+  pidDer.Compute();
+  
+  controlMotor(0, output); // Motor Izquierdo
+  controlMotor(1, output); // Motor Derecho
 }
 
-void controlMotor(int enPin, int inPin1, int inPin2, double speed) {
-  if (speed > 0) {
-    digitalWrite(inPin1, HIGH);
-    digitalWrite(inPin2, LOW);
-  } else {
-    digitalWrite(inPin1, LOW);
-    digitalWrite(inPin2, HIGH);
+void controlMotor(int motor, double speed) {
+  if (speed < 0) {
+    if (motor == 0) {
+      motorIzq.backward();
+    } else {
+      motorDer.backward();
+    }
     speed = -speed;
+  } else {
+    if (motor == 0) {
+      motorIzq.forward();
+    } else {
+      motorDer.forward();
+    }
   }
 
-  // Limitar la velocidad del motor a la velocidad máxima del actuador lineal
   double maxSpeed = 255.0 * (40.0 / 60.0); // (40 mm/s) / (60 s/min) = 0.83
-  if (speed > maxSpeed) {
-    speed = maxSpeed;
-  }
+  speed = min(speed, maxSpeed);
 
-  analogWrite(enPin, speed);
+  if (motor == 0) {
+    motorIzq.setSpeed(speed);
+    motorIzq.run();
+  } else {
+    motorDer.setSpeed(speed);
+    motorDer.run();
+  }
 }
