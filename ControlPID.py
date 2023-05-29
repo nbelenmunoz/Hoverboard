@@ -38,7 +38,7 @@ pid1 = PID(Kp=1, Ki=0.1, Kd=0.05, setpoint=0, output_limits=(-50, 50), auto_mode
 pid2 = PID(Kp=1, Ki=0.1, Kd=0.05, setpoint=0, output_limits=(-50, 50), auto_mode=True) 
 
 def pitch(quat, accel):
-    if quat[0] is not None and quat[1] is not None and quat[2] is not None and quat[3] is not None:
+    if(quat[0] != None and quat[1] != None and quat[2] != None and quat[3] != None):
         pitch = np.arcsin(2 * quat[0] * quat[2] - quat[1] * quat[3])
     else:
         pitch = 0.0
