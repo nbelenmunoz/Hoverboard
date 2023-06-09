@@ -6,23 +6,26 @@ import math
 from gpiozero import Motor
 from simple_pid import PID
 import RPi.GPIO as GPIO
-#import matplotlib as mp
+#import matplotlib.pyplot as plt
 
-#GPIO inicializafo
+
+#GPIO inicializado
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(16,GPIO.OUT)
+#GPIO.output(16,GPIO.LOW)
 
 limit = 2.0
 accelLimit = 0.3
 
 #ganancias
-kp1 = 1
-ki1 = 0.1
-kd1 = 1
 
-kp2 = 1
-ki2 = 0.5
-kd2 = 1.5
+kp1 = 1
+ki1 = 0
+kd1 = 0.5
+
+kp2 = 2
+ki2 = 0
+kd2 = 0.5
 
 i2c = board.I2C()  # uses board.SCL and board.SDA
 sensor1 = adafruit_bno055.BNO055_I2C(i2c,0x28)
@@ -41,25 +44,29 @@ pidangle2 = PID(kp1, ki1, kd1, setpoint=0, output_limits=(-15, 15))
 pidaccel2 = PID(kp2, ki2, kd2, setpoint=0, output_limits=(-5, 5))
 
 def pitch(quat):
-    # Create Pitch Angle from Quaternions
-    if(quat[0] != None and quat[1] != None and quat[2] != None and quat[3] != None):
-        pitch = np.arcsin(2 * quat[0] * quat[2] - quat[1] * quat[3])
-    else:
-        pitch = 0.0
-    if(math.isnan(pitch)):
-        pitch = 0.0
-# Convert Radians to Degrees */
-    return  57.2958 * pitch
+    if None in quat:
+        return 0.0
+
+    sin_value = 2 * quat[0] * quat[2] - quat[1] * quat[3]
+    if sin_value > 1:
+        sin_value = 1
+    elif sin_value < -1:
+        sin_value = -1
+
+    pitch = np.arcsin(sin_value)
+    return 57.2958 * pitch
 
 def accel(acc):
-    #print(type(acc))
-    if type(acc) != 'float':
+    if not isinstance(acc, float):
         acc = 0.0
+    elif acc is None:
+        return 0.0
     return acc
 
-def test():
-    while(true):
-        GPIO.output(16,GPIO.HIGH)
+
+#def test():
+#    while(true):
+#        GPIO.output(16,GPIO.HIGH)
 
 def start():
     on_middle = False
@@ -71,16 +78,31 @@ def start():
         if (i == 100):
             on_middle = True
 
+
+def turn_on():
+    GPIO.output(16,GPIO.HIGH)
+
+def initial_routine():
+    izq.backward(1)  # move forward at (0 <= x <= 1) [float]
+    der.backward(1)
+    time.sleep(3)
+    izq.forward(1)
+    der.forward(1)
+    time.sleep(1.15)
+    der.stop()
+    izq.stop()
+#    turn_on()
 def main():
+
     while(True):
-        GPIO.output(16,GPIO.HIGH)
+
         #if(sensor1.calibrated and sensor2.calibrated):
         x1 = pitch(sensor1.quaternion)
-        accel1 = sensor1.acceleration[0]
+        accel1 = sensor1.acceleration[0] if sensor1.acceleration[0] is not None else 0.0
         #acc = sensor1.acceleration
 
         x2 = pitch(sensor2.quaternion)
-        accel2 = sensor2.acceleration[0]
+        accel2 = sensor2.acceleration[0] if sensor2.acceleration[0] is not None else 0.0
 
         #print(acc)
 
@@ -111,8 +133,11 @@ def main():
 
         controlangle2 = pidangle2(x2)
         controlaccel2 = pidaccel2(accel2)
- 
-        # Aplicaci[on del contol
+
+        time_values = []
+        pid_output_values = []
+
+        # Aplicacion del contol
         if controlangle1 > limit or controlaccel1 > limit:
             izq.forward(1)
         elif controlangle1 < -limit or controlaccel1 < -limit:
@@ -127,8 +152,22 @@ def main():
         else: 
             der.stop()
 
+
+        # Plot the PID output over time
+#        plt.plot(time_values, pid_output_values)
+#        plt.xlabel('Time')
+#        plt.ylabel('PID Output')
+#        plt.title('PID Controller Output')
+#        plt.grid(True)
+#        plt.show()
+#        
         time.sleep(0.1)
+
+initial_routine()
+#time.sleep(5)
+turn_on()
 main()
+
 
 
 
